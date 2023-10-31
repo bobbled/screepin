@@ -1,17 +1,41 @@
+var libs = require('lib');
+
 var roleSpawner = {
 
-    run: function(baseName, role, num, stats) {
+    run: function(baseName, workerInfo, stats) {
 
         var workers = _.filter(Game.creeps, (creep) => /worker/.test(creep.name));
 
-        if(workers.length < num) {
+        var room = Game.spawns[baseName].room;
+        var openSpots = 0;
+        var buildParts = [WORK,CARRY,MOVE];
+
+        for (var source of room.find(FIND_SOURCES)) {
+            openSpots += libs.getOpenSpots(room, source);
+        }
+
+        var creepCap = openSpots;
+
+        if(workers.length < creepCap + workerInfo['numBuilder']) {
             var newName = 'worker ' + Game.time;
-            if (Game.spawns[baseName].spawnCreep(stats, newName) == 0) {
+            for (var parts of workerInfo.templates) {
+                if (libs.getCreepCost(parts) <= room.energyCapacityAvailable) {
+                    buildParts = parts;
+                    console.log('chose parts ' + buildParts);
+                    break;
+                }
+            }
+            if (Game.spawns[baseName].spawnCreep(buildParts, newName) == 0) {
                 var creep = Game.creeps[newName];
             }
-        } else if (workers.length > num) {
-            creep.suicide();
+        } else if (workers.length > creepCap + workerInfo['numBuilder']) {
+            for (var creep of workers) {
+                creep.suicide();
+                break;
+            }
         }
+
+        libs.assignJobs(room, workerInfo, creepCap);
 
         if(Game.spawns[baseName].spawning) {
             var spawningCreep = Game.creeps[Game.spawns[baseName].spawning.name];

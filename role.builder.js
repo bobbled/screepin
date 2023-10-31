@@ -21,9 +21,15 @@ var roleBuilder = {
 
         if(creep.memory.building) {
             var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
+            var cheapestTarget;
             if(targets.length) {
-                if(creep.build(targets[0]) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+                for (var site of targets) {
+                    if (cheapestTarget === undefined || (site.progressTotal - site.progress) < (cheapestTarget.progressTotal - cheapestTarget.progress)) {
+                        cheapestTarget = site;
+                    }
+                }
+                if(creep.build(cheapestTarget) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(cheapestTarget, {visualizePathStyle: {stroke: '#ffffff'}});
                 }
             }
         }

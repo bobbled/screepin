@@ -29,18 +29,17 @@ function getEnergySource(room) {
     return lowestIndex;
 }
 
-function buildExtensions(room, startPos) {
-    room.createConstructionSite(startPos.x + 2, startPos.y + 2, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x + 2, startPos.y, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x + 2, startPos.y - 2, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x, startPos.y + 2, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x, startPos.y - 2, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x - 2, startPos.y + 2, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x - 2, startPos.y - 2, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x - 2, startPos.y, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x - 4, startPos.y - 4, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x - 4, startPos.y - 2, STRUCTURE_EXTENSION);
-    room.createConstructionSite(startPos.x - 4, startPos.y, STRUCTURE_EXTENSION);
+function buildExtensions(room, extensions) {
+    room.createConstructionSite(x + 1, y, STRUCTURE_EXTENSION);
+    room.createConstructionSite(x + 1, y + 1, STRUCTURE_EXTENSION);
+    room.createConstructionSite(x, y + 1, STRUCTURE_EXTENSION);
+    room.createConstructionSite(x, y, STRUCTURE_EXTENSION);
+}
+
+function buildThing(room, coords, thing) {
+    for (var coord of coords) {
+        room.createConstructionSite(coord[0], coord[1], thing);
+    }
 }
 
 function getOpenSpots(room, source) {
@@ -70,4 +69,64 @@ function getOpenSpots(room, source) {
     return(spots);
 }
 
-module.exports = { getEnergySource, buildExtensions, getOpenSpots };
+function flipRole(room, fromRole, toRole) {
+
+    var flipped = false;
+
+    for (var creep of room.find(FIND_CREEPS)) {
+        if (creep.memory.role === undefined) {
+            creep.memory.role = toRole;
+            console.log('undef to ' + toRole);
+            flipped = true;
+            break;
+        }
+    }
+
+    if (!flipped) {
+        for (var creep of room.find(FIND_CREEPS)) {
+            if (creep.memory.role == fromRole) {
+                creep.memory.role = toRole;
+                console.log(fromRole + ' to ' + toRole);
+                break;
+            }
+        }
+    }
+}
+
+function assignJobs(room, workerInfo, creepCap) {
+    var existingRoles = {};
+
+    for (var creep of room.find(FIND_CREEPS)) {
+        if (existingRoles[creep.memory.role] === undefined) {
+            existingRoles[creep.memory.role] = 1;
+        } else {
+            existingRoles[creep.memory.role]++;
+        }
+    }
+    console.log(JSON.stringify(existingRoles));
+
+    var desiredGatherers = creepCap - Math.floor(creepCap * workerInfo['upgrader']);
+
+    if (existingRoles['gatherer'] < desiredGatherers && (existingRoles['upgrader'] !== undefined || existingRoles['undefined'] !== undefined)) {
+        flipRole(room, 'upgrader', 'gatherer');
+    } else if ((existingRoles['upgrader'] < creepCap - desiredGatherers || existingRoles['upgrader'] === undefined ) && (existingRoles['gatherer'] > desiredGatherers || existingRoles['undefined'] !== undefined)) {
+        flipRole(room, 'gatherer', 'upgrader');
+    } else if (workerInfo['numBuilder'] > 0 && (existingRoles['builder'] < workerInfo['numBuilder'] || existingRoles['builder'] === undefined)) {
+        if (room.find(FIND_CONSTRUCTION_SITES).length == 0) {
+            flipRole(room, 'builder', 'gatherer');
+        } else if (existingRoles['upgrader'] > creepCap - desiredGatherers || existingRoles['undefined'] > 0) {
+            flipRole(room, 'upgrader', 'builder');
+        } else if (existingRoles['gatherer'] > desiredGatherers) {
+            flipRole(room, 'gatherer', 'builder');
+        }
+    }
+}
+
+function getCreepCost(parts) {
+    var totalCost = 0;
+    for (part of parts) {
+        totalCost += BODYPART_COST[part];
+    }
+    return(totalCost)
+}
+module.exports = { getEnergySource, buildExtensions, getOpenSpots, assignJobs, getCreepCost, buildThing };
