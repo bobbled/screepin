@@ -105,18 +105,17 @@ function assignJobs(room, workerInfo, creepCap) {
     }
     console.log(JSON.stringify(existingRoles));
 
-    var desiredGatherers = creepCap - Math.floor(creepCap * workerInfo['upgrader']);
 
-    if (existingRoles['gatherer'] < desiredGatherers && (existingRoles['upgrader'] !== undefined || existingRoles['undefined'] !== undefined)) {
+    if ((existingRoles['gatherer'] < workerInfo['gatherer'] || existingRoles['gatherer'] === undefined) && (existingRoles['upgrader'] !== undefined || existingRoles['undefined'] !== undefined)) {
         flipRole(room, 'upgrader', 'gatherer');
-    } else if ((existingRoles['upgrader'] < creepCap - desiredGatherers || existingRoles['upgrader'] === undefined ) && (existingRoles['gatherer'] > desiredGatherers || existingRoles['undefined'] !== undefined)) {
+    } else if ((existingRoles['upgrader'] < workerInfo['upgrader'] || existingRoles['upgrader'] === undefined ) && (existingRoles['gatherer'] > workerInfo['gatherer'] || existingRoles['undefined'] !== undefined)) {
         flipRole(room, 'gatherer', 'upgrader');
-    } else if (workerInfo['numBuilder'] > 0 && (existingRoles['builder'] < workerInfo['numBuilder'] || existingRoles['builder'] === undefined)) {
+    } else if (workerInfo['builder'] > 0 && (existingRoles['builder'] < workerInfo['builder'] || existingRoles['builder'] === undefined)) {
         if (room.find(FIND_CONSTRUCTION_SITES).length == 0) {
             flipRole(room, 'builder', 'gatherer');
-        } else if (existingRoles['upgrader'] > creepCap - desiredGatherers || existingRoles['undefined'] > 0) {
+        } else if (existingRoles['upgrader'] > workerInfo['upgrader'] || existingRoles['undefined'] > 0) {
             flipRole(room, 'upgrader', 'builder');
-        } else if (existingRoles['gatherer'] > desiredGatherers) {
+        } else if (existingRoles['gatherer'] > workerInfo['gatherer']) {
             flipRole(room, 'gatherer', 'builder');
         }
     }
@@ -129,4 +128,60 @@ function getCreepCost(parts) {
     }
     return(totalCost)
 }
-module.exports = { getEnergySource, buildExtensions, getOpenSpots, assignJobs, getCreepCost, buildThing };
+
+function buildParts(parts) {
+    var finalParts = [];
+
+    for (var type in parts) {
+        for (let i = 0; i < parts[type]; i++) {
+            finalParts.push(type);
+        }
+    }
+    return(finalParts);
+}
+
+function getFreeTargets(creep, targetClaims, minDist) {
+    var freeTargets = [];
+
+    var targets = creep.room.find(FIND_STRUCTURES, {
+        filter: (structure) => {
+            return (structure.structureType == STRUCTURE_EXTENSION ||
+                structure.structureType == STRUCTURE_SPAWN ||
+                structure.structureType == STRUCTURE_TOWER) &&
+                structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+        }
+    });
+
+    if (targetClaims === undefined) {
+        return(targets);
+    }
+
+    for (var target of targets) {
+        var claimed = false;
+        for (var [creepName, creepPos] of Object.entries(targetClaims)) {
+            if ((creep.name != creepName) && Math.abs(target.pos.x - creepPos.x) + Math.abs(target.pos.y - creepPos.y) <= minDist) {
+                claimed = true;
+                break;
+            }
+        }
+        if (!claimed) {
+            freeTargets.push(target);
+        }
+    }
+    return(freeTargets);
+}
+
+function findShortestPath(creep, targets) {
+    var shortestPath;
+
+    for (var target of targets) {
+        var steps = creep.pos.findPathTo(target);
+        if  (shortestPath === undefined || steps.length < shortestPath) {
+            shortestPath = steps.length;
+            shortestTarget = target;
+        }
+    }
+    console.log('shortest path: ' + shortestPath);
+    return(shortestTarget);
+}
+module.exports = { getEnergySource, buildExtensions, getOpenSpots, assignJobs, getCreepCost, buildThing, buildParts, findShortestPath, getFreeTargets };

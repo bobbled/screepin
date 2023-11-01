@@ -2,21 +2,26 @@ var roleGatherer = require('role.gatherer');
 var roleBuilder = require('role.builder');
 var roleSpawner = require('role.spawner');
 var libs = require('lib');
+var targetClaims = {};
 
 module.exports.loop = function () {
 
     var baseName = 'booba';
     var workerInfo = {
-        "upgrader": 0.3,
-        "numBuilder": 3,
+        "counts": {
+            "upgrader": 1,
+            "gatherer": 3,
+            "builder": 1
+        },
         "templates": [
-            [WORK,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [WORK,WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE],
-            [WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE],
-            [WORK,WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE],
-            [WORK,WORK,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE],
-            [WORK,WORK,CARRY,CARRY,MOVE,MOVE],
-            [WORK,CARRY,CARRY,MOVE,MOVE]
+            {[WORK]: 9, [CARRY]: 9, [MOVE]: 9},
+            {[WORK]: 7, [CARRY]: 7, [MOVE]: 7},
+            {[WORK]: 6, [CARRY]: 6, [MOVE]: 6},
+            {[WORK]: 5, [CARRY]: 5, [MOVE]: 5},
+            {[WORK]: 4, [CARRY]: 4, [MOVE]: 4},
+            {[WORK]: 3, [CARRY]: 3, [MOVE]: 3},
+            {[WORK]: 2, [CARRY]: 2, [MOVE]: 2},
+            {[WORK]: 1, [CARRY]: 2, [MOVE]: 2}
         ]
     }
 
@@ -45,7 +50,20 @@ module.exports.loop = function () {
             [30, 36],
             [29, 36],
             [28, 36],
-            [27, 36]
+            [27, 36],
+            [26, 35],
+            [25, 34],
+            [25, 33],
+            [25, 32],
+            [24, 31],
+            [23, 30],
+            [22, 29],
+            [21, 28],
+            [20, 27],
+            [19, 26],
+            [18, 25],
+            [17, 24],
+            [16, 23]
         ]
     ]
 
@@ -100,7 +118,7 @@ module.exports.loop = function () {
         var creep = Game.creeps[name];
 
         if(creep.memory.role == 'gatherer' || creep.memory.role == 'upgrader') {
-            roleGatherer.run(creep);
+            roleGatherer.run(creep, targetClaims);
         }
         if(creep.memory.role == 'builder') {
             roleBuilder.run(creep);
