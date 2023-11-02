@@ -2,7 +2,7 @@ var libs = require('lib');
 
 var roleBuilder = {
 
-    run: function(creep) {
+    run: function(creep, energyClaims) {
 
         var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
         if (targets.length == 0) {
@@ -10,11 +10,12 @@ var roleBuilder = {
         }
 
         if(creep.memory.building && creep.store[RESOURCE_ENERGY] == 0) {
-            delete creep.memory.energySource;
+            energyClaims[creep.name] = libs.getEnergySource(creep, energyClaims);
             creep.memory.building = false;
             creep.say('🔄 harvest');
         }
         if(!creep.memory.building && creep.store.getFreeCapacity() == 0) {
+            delete energyClaims[creep.name];
             creep.memory.building = true;
             creep.say('🚧 build');
         }
@@ -32,13 +33,17 @@ var roleBuilder = {
                     creep.moveTo(cheapestTarget, {visualizePathStyle: {stroke: '#ffffff'}});
                 }
             }
-        }
-        else {
-            if (creep.memory.energySource === undefined) {
-                creep.memory.energySource = libs.getEnergySource(creep.room);
+        } else {
+            if (energyClaims[creep.name] === undefined) {
+                energyClaims[creep.name] = libs.getEnergySource(creep, energyClaims);
             }
-            if(creep.harvest(creep.room.find(FIND_SOURCES)[creep.memory.energySource]) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(creep.room.find(FIND_SOURCES)[creep.memory.energySource], {visualizePathStyle: {stroke: '#ffaa00'}});
+            var rc = creep.harvest(energyClaims[creep.name]);
+            if(rc == ERR_NOT_IN_RANGE || rc == ERR_NOT_ENOUGH_RESOURCES) {
+                creep.moveTo(energyClaims[creep.name], {visualizePathStyle: {stroke: '#ffaa00'}});
+            } else if (rc == ERR_NOT_ENOUGH_RESOURCES && creep.store[RESOURCE_ENERGY] > 0) {
+                creep.memory.building = true;
+            } else if (rc != OK) {
+                console.log('confused builder: ' + rc + ' energy ' + creep.store[RESOURCE_ENERGY]);
             }
         }
     }

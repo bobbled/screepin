@@ -1,32 +1,39 @@
-function getEnergySource(room) {
-    var sources = room.find(FIND_SOURCES).length;
-    var energySources = {};
-    var lowestIndex = 0;
-    var lowestValue = 9999;
+function getEnergySource(creep, energyClaims) {
 
-    for (var creep of room.find(FIND_CREEPS)) {
-        if (creep.memory.energySource !== undefined) {
-            if (creep.memory.energySource in energySources) {
-                energySources[creep.memory.energySource]++;
-            } else {
-                energySources[creep.memory.energySource] = 1;
+    var sourceMap = {};
+    var availableSources = [];
+    var roomSources = creep.room.find(FIND_SOURCES);
+
+    for (var roomSource of roomSources) {
+        sourceMap[roomSource.pos.x + ',' + roomSource.pos.y] = {
+            "num": 0,
+            "spots": getOpenSpots(creep.room, roomSource.pos),
+            "source": roomSource
+        };
+    }
+
+    //console.log("ec: " + JSON.stringify(energyClaims, null, 2));
+    if (energyClaims !== undefined) {
+        for (var [creepName, claimPos] of Object.entries(energyClaims)) {
+            if (creepName != creep.name) {
+                sourceMap[claimPos.pos.x + ',' + claimPos.pos.y]['num']++;
             }
         }
     }
 
-    for (let i = 0; i < sources; i++) {
-        if (i.toString() in energySources ) {
-            if (energySources[i] < lowestValue) {
-                lowestIndex = i;
-                lowestValue = energySources[i];
-            }
-        } else {
-            lowestIndex = i;
-            lowestValue = 0;
+    for (var sourceInfo of Object.values(sourceMap)) {
+        if (sourceInfo['num'] < sourceInfo['spots'] && sourceInfo['source']['energy'] > 0) {
+            availableSources.push(sourceInfo['source']);
         }
     }
-    console.log('lowindex: ' + lowestIndex);
-    return lowestIndex;
+
+    if (availableSources.length == 0) {
+        for (var roomSource of roomSources) {
+            availableSources.push(roomSource);
+        }
+    }
+
+    return(findShortestPath(creep, availableSources));
 }
 
 function buildExtensions(room, extensions) {
@@ -42,11 +49,11 @@ function buildThing(room, coords, thing) {
     }
 }
 
-function getOpenSpots(room, source) {
+function getOpenSpots(room, pos) {
 
     var spots = 0;
-    var myX = source.pos.x;
-    var myY = source.pos.y;
+    var myX = pos.x;
+    var myY = pos.y;
 
     var surroundingSpots = [
         [myX, myY + 1],
@@ -76,7 +83,7 @@ function flipRole(room, fromRole, toRole) {
     for (var creep of room.find(FIND_CREEPS)) {
         if (creep.memory.role === undefined) {
             creep.memory.role = toRole;
-            console.log('undef to ' + toRole);
+//            console.log('undef to ' + toRole);
             flipped = true;
             break;
         }
@@ -86,7 +93,7 @@ function flipRole(room, fromRole, toRole) {
         for (var creep of room.find(FIND_CREEPS)) {
             if (creep.memory.role == fromRole) {
                 creep.memory.role = toRole;
-                console.log(fromRole + ' to ' + toRole);
+//                console.log(fromRole + ' to ' + toRole);
                 break;
             }
         }
@@ -103,7 +110,7 @@ function assignJobs(room, workerInfo, creepCap) {
             existingRoles[creep.memory.role]++;
         }
     }
-    console.log(JSON.stringify(existingRoles));
+//    console.log(JSON.stringify(existingRoles));
 
 
     if ((existingRoles['gatherer'] < workerInfo['gatherer'] || existingRoles['gatherer'] === undefined) && (existingRoles['upgrader'] !== undefined || existingRoles['undefined'] !== undefined)) {
@@ -181,7 +188,7 @@ function findShortestPath(creep, targets) {
             shortestTarget = target;
         }
     }
-    console.log('shortest path: ' + shortestPath);
+    //console.log('shortest path: ' + shortestPath);
     return(shortestTarget);
 }
 module.exports = { getEnergySource, buildExtensions, getOpenSpots, assignJobs, getCreepCost, buildThing, buildParts, findShortestPath, getFreeTargets };

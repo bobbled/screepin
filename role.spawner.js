@@ -23,7 +23,6 @@ var roleSpawner = {
                 }
             }
             if (Game.spawns[baseName].spawnCreep(buildParts, newName) == 0) {
-                console.log('chose parts ' + JSON.stringify(buildPartsNice));
                 var creep = Game.creeps[newName];
             }
         } else if (workers.length > totalWorkers) {

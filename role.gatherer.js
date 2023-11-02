@@ -2,25 +2,27 @@ var libs = require('lib');
 
 var roleGatherer = {
 
-    run: function(creep, targetClaims) {
+    run: function(creep, targetClaims, energyClaims) {
+
+        //console.log(JSON.stringify(energyClaims, null, 1));
 
         if (creep.store[RESOURCE_ENERGY] == 0) {
+            energyClaims[creep.name] = libs.getEnergySource(creep, energyClaims);
             if (targetClaims !== undefined) {
                 delete targetClaims[creep.name];
             }
 
-            if (creep.memory.energySource === undefined) {
-                creep.memory.energySource = libs.getEnergySource(creep.room);
-            }
             if (creep.memory.upgrading) {
                 creep.memory.upgrading = false;
             }
-
-            if (creep.harvest(creep.room.find(FIND_SOURCES)[creep.memory.energySource]) == ERR_NOT_IN_RANGE || creep.harvest(creep.room.find(FIND_SOURCES)[creep.memory.energySource]) == ERR_NOT_ENOUGH_RESOURCES) {
-                creep.moveTo(creep.room.find(FIND_SOURCES)[creep.memory.energySource], {visualizePathStyle: {stroke: '#ffaa00'}});
+            var rc = creep.harvest(energyClaims[creep.name]);
+            if (rc == ERR_NOT_IN_RANGE || rc == ERR_NOT_ENOUGH_RESOURCES) {
+                creep.moveTo(energyClaims[creep.name], {visualizePathStyle: {stroke: '#ffaa00'}});
             }
         } else if (creep.store.getFreeCapacity() == 0) {
-            delete creep.memory.energySource;
+            if (energyClaims !== undefined) {
+                delete energyClaims[creep.name];
+            }
             var targets = libs.getFreeTargets(creep, targetClaims, 2);
 
             if(targets.length > 0 && creep.memory.role != 'upgrader') {
@@ -43,10 +45,8 @@ var roleGatherer = {
                 }
             }
         } else {
-            if (creep.memory.energySource === undefined) {
-                creep.memory.energySource = libs.getEnergySource(creep.room);
-            }
             if (creep.memory.upgrading) {
+                delete energyClaims[creep.name];
                 var targets = libs.getFreeTargets(creep, targetClaims, 2);
 
                 if(targets.length > 0 && creep.memory.role != 'upgrader') {
@@ -59,16 +59,23 @@ var roleGatherer = {
                 } else {
                     if (creep.upgradeController(creep.room.controller) == ERR_NOT_IN_RANGE) {
                         creep.moveTo(creep.room.controller);
-                        console.log('got here');
                     }
                 }
             } else {
-                if (creep.harvest(creep.room.find(FIND_SOURCES)[creep.memory.energySource]) == ERR_NOT_ENOUGH_RESOURCES	&& creep.store[RESOURCE_ENERGY] > 0) {
-                    console.log(creep.name + ' store ' + creep.store[RESOURCE_ENERGY] + ' es ' + creep.harvest(creep.room.find(FIND_SOURCES)[creep.memory.energySource]));
+                if (energyClaims[creep.name] === undefined) {
+                    energyClaims[creep.name] = libs.getEnergySource(creep, energyClaims);
+                }
+                var rc = creep.harvest(energyClaims[creep.name]);
+//                console.log('rc: ' + rc + ' ' + creep.name);
+//                console.log(JSON.stringify(energyClaims[creep.name]));
+                if (rc == ERR_NOT_ENOUGH_RESOURCES) {
+                    console.log('got here');
+                    delete energyClaims[creep.name];
                     creep.memory.upgrading = true;
-                    console.log('energy depleted ' + creep.name);
-                } else if (creep.harvest(creep.room.find(FIND_SOURCES)[creep.memory.energySource]) == ERR_NOT_IN_RANGE) {
-                    creep.moveTo(creep.room.find(FIND_SOURCES)[creep.memory.energySource], {visualizePathStyle: {stroke: '#ffaa00'}});
+                } else if (rc == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(energyClaims[creep.name], {visualizePathStyle: {stroke: '#ffaa00'}});
+                } else if (rc == OK) {
+                    console.log('worker OK: ' + creep.name);
                 }
             }
         }
