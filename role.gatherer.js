@@ -4,8 +4,6 @@ var roleGatherer = {
 
     run: function(creep, targetClaims, energyClaims) {
 
-        //console.log(JSON.stringify(energyClaims, null, 1));
-
         if (creep.store[RESOURCE_ENERGY] == 0) {
             energyClaims[creep.name] = libs.getEnergySource(creep, energyClaims);
             if (targetClaims !== undefined) {
@@ -52,7 +50,6 @@ var roleGatherer = {
                 if(targets.length > 0 && creep.memory.role != 'upgrader') {
                     var target = libs.findShortestPath(creep, targets);
                     targetClaims[creep.name] = target['pos'];
-                    //console.log(JSON.stringify(target, null, 2));
                     if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                         creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
                     }
@@ -62,20 +59,12 @@ var roleGatherer = {
                     }
                 }
             } else {
-                if (energyClaims[creep.name] === undefined) {
-                    energyClaims[creep.name] = libs.getEnergySource(creep, energyClaims);
-                }
-                var rc = creep.harvest(energyClaims[creep.name]);
-//                console.log('rc: ' + rc + ' ' + creep.name);
-//                console.log(JSON.stringify(energyClaims[creep.name]));
-                if (rc == ERR_NOT_ENOUGH_RESOURCES) {
-                    console.log('got here');
-                    delete energyClaims[creep.name];
+                energyClaims[creep.name] = libs.getEnergySource(creep, energyClaims);
+                if (energyClaims[creep.name]['energy'] == 0) {
                     creep.memory.upgrading = true;
-                } else if (rc == ERR_NOT_IN_RANGE) {
+                    delete energyClaims[creep.name];
+                } else if (creep.harvest(energyClaims[creep.name]) == ERR_NOT_IN_RANGE) {
                     creep.moveTo(energyClaims[creep.name], {visualizePathStyle: {stroke: '#ffaa00'}});
-                } else if (rc == OK) {
-                    console.log('worker OK: ' + creep.name);
                 }
             }
         }

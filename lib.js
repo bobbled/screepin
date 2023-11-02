@@ -12,7 +12,6 @@ function getEnergySource(creep, energyClaims) {
         };
     }
 
-    //console.log("ec: " + JSON.stringify(energyClaims, null, 2));
     if (energyClaims !== undefined) {
         for (var [creepName, claimPos] of Object.entries(energyClaims)) {
             if (creepName != creep.name) {
@@ -83,7 +82,6 @@ function flipRole(room, fromRole, toRole) {
     for (var creep of room.find(FIND_CREEPS)) {
         if (creep.memory.role === undefined) {
             creep.memory.role = toRole;
-//            console.log('undef to ' + toRole);
             flipped = true;
             break;
         }
@@ -93,7 +91,6 @@ function flipRole(room, fromRole, toRole) {
         for (var creep of room.find(FIND_CREEPS)) {
             if (creep.memory.role == fromRole) {
                 creep.memory.role = toRole;
-//                console.log(fromRole + ' to ' + toRole);
                 break;
             }
         }
@@ -110,8 +107,6 @@ function assignJobs(room, workerInfo, creepCap) {
             existingRoles[creep.memory.role]++;
         }
     }
-//    console.log(JSON.stringify(existingRoles));
-
 
     if ((existingRoles['gatherer'] < workerInfo['gatherer'] || existingRoles['gatherer'] === undefined) && (existingRoles['upgrader'] !== undefined || existingRoles['undefined'] !== undefined)) {
         flipRole(room, 'upgrader', 'gatherer');
@@ -188,7 +183,6 @@ function findShortestPath(creep, targets) {
             shortestTarget = target;
         }
     }
-    //console.log('shortest path: ' + shortestPath);
     return(shortestTarget);
 }
 module.exports = { getEnergySource, buildExtensions, getOpenSpots, assignJobs, getCreepCost, buildThing, buildParts, findShortestPath, getFreeTargets };

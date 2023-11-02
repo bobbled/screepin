@@ -42,8 +42,6 @@ var roleBuilder = {
                 creep.moveTo(energyClaims[creep.name], {visualizePathStyle: {stroke: '#ffaa00'}});
             } else if (rc == ERR_NOT_ENOUGH_RESOURCES && creep.store[RESOURCE_ENERGY] > 0) {
                 creep.memory.building = true;
-            } else if (rc != OK) {
-                console.log('confused builder: ' + rc + ' energy ' + creep.store[RESOURCE_ENERGY]);
             }
         }
     }
