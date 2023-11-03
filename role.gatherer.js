@@ -24,7 +24,7 @@ var roleGatherer = {
             var targets = libs.getFreeTargets(creep, targetClaims, 2);
 
             if(targets.length > 0 && creep.memory.role != 'upgrader') {
-                var target = libs.findShortestPath(creep, targets);
+                var target = creep.pos.findClosestByPath(targets);
 
                 targetClaims[creep.name] = target['pos'];
                 if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
@@ -48,7 +48,7 @@ var roleGatherer = {
                 var targets = libs.getFreeTargets(creep, targetClaims, 2);
 
                 if(targets.length > 0 && creep.memory.role != 'upgrader') {
-                    var target = libs.findShortestPath(creep, targets);
+                    var target = creep.pos.findClosestByPath(targets);
                     targetClaims[creep.name] = target['pos'];
                     if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                         creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});

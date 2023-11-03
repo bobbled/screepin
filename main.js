@@ -24,13 +24,14 @@ module.exports.loop = function () {
         }
     }
 
-    for (var [roomName, room] of Object.entries(rooms)) {}
-        libs.buildThing(Game.rooms[roomName], room['roads'], STRUCTURE_ROAD);
-        libs.buildThing(Game.rooms[roomName], room['extensions'], STRUCTURE_EXTENSION);
+    for (let [roomName, room] of Object.entries(rooms)) {
+        for (let [name, locations] of Object.entries(room['structures'])) {
+            libs.buildThing(Game.rooms[roomName], locations, name);
+        }        
 
         roleSpawner.run(room['baseName'], room['workerInfo']);
 
-        for (var creep of Game.rooms[roomName].find(FIND_MY_CREEPS)) {
+        for (let creep of Game.rooms[roomName].find(FIND_MY_CREEPS)) {
             if(creep.memory.role == 'gatherer' || creep.memory.role == 'upgrader') {
                 roleGatherer.run(creep, targetClaims, energyClaims);
             }
@@ -38,4 +39,5 @@ module.exports.loop = function () {
                 roleBuilder.run(creep, energyClaims);
             }
         }
+    }
 }

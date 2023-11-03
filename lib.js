@@ -14,7 +14,7 @@ function getEnergySource(creep, energyClaims) {
 
     if (energyClaims !== undefined) {
         for (var [creepName, claimPos] of Object.entries(energyClaims)) {
-            if (creepName != creep.name) {
+            if (creepName != creep.name && claimPos !== null) {
                 sourceMap[claimPos.pos.x + ',' + claimPos.pos.y]['num']++;
             }
         }
@@ -32,7 +32,7 @@ function getEnergySource(creep, energyClaims) {
         }
     }
 
-    return(findShortestPath(creep, availableSources));
+    return(creep.pos.findClosestByPath(availableSources));
 }
 
 function buildExtensions(room, extensions) {
@@ -44,7 +44,8 @@ function buildExtensions(room, extensions) {
 
 function buildThing(room, coords, thing) {
     for (var coord of coords) {
-        room.createConstructionSite(coord[0], coord[1], thing);
+        let rc = room.createConstructionSite(coord[0], coord[1], thing);
+       //console.log('site ' + rc);
     }
 }
 
@@ -173,16 +174,4 @@ function getFreeTargets(creep, targetClaims, minDist) {
     return(freeTargets);
 }
 
-function findShortestPath(creep, targets) {
-    var shortestPath;
-
-    for (var target of targets) {
-        var steps = creep.pos.findPathTo(target);
-        if  (shortestPath === undefined || steps.length < shortestPath) {
-            shortestPath = steps.length;
-            shortestTarget = target;
-        }
-    }
-    return(shortestTarget);
-}
-module.exports = { getEnergySource, buildExtensions, getOpenSpots, assignJobs, getCreepCost, buildThing, buildParts, findShortestPath, getFreeTargets };
+module.exports = { getEnergySource, buildExtensions, getOpenSpots, assignJobs, getCreepCost, buildThing, buildParts, getFreeTargets };
